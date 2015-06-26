@@ -14,15 +14,16 @@ PISTON_NODE_ID   = OpenMaya.MTypeId(0x100ffff)
 
 class Piston(OpenMayaMPx.MPxNode):
     '''
+    class of the node core...
     '''
     def __init__(self):
         super(Piston, self).__init__()
         
         
     def compute(self, plug, dataBlock):
-        sita = dataBlock.inputValue(self.inRotate).asFloat() * math.pi / 180.0
-        A    = dataBlock.inputValue(self.inLengthA).asFloat()
-        B    = dataBlock.inputValue(self.inLengthB).asFloat()
+        sita = dataBlock.inputValue(self.rotate).asFloat() * math.pi / 180.0
+        A    = dataBlock.inputValue(self.distanceA).asFloat()
+        B    = dataBlock.inputValue(self.distanceB).asFloat()
 
         H = math.cos(sita) * B + math.sqrt(A**2 - (math.sin(sita) * B)**2)
         
@@ -33,32 +34,39 @@ class Piston(OpenMayaMPx.MPxNode):
 
 
 def nodeCreator():
+    '''
+    Use to create the node...
+    '''
     return OpenMayaMPx.asMPxPtr(Piston())
 
 
 
 def nodeInitializer():
+    '''
+    Setup node's attributes...
+    '''
     mFnAttr = OpenMaya.MFnNumericAttribute()
     
-    Piston.inLengthA = mFnAttr.create('distanceA', 'disa', OpenMaya.MFnNumericData.kFloat, 0.0)
-    Piston.inLengthB = mFnAttr.create('distanceB', 'disb', OpenMaya.MFnNumericData.kFloat, 0.0)
-    Piston.inRotate  = mFnAttr.create('rotate',    'r',    OpenMaya.MFnNumericData.kFloat, 0.0)
-    Piston.output    = mFnAttr.create('output',    'o',    OpenMaya.MFnNumericData.kFloat)
+    for atl, ats in (('distanceA', 'disa'), ('distanceB', 'disb'), ('rotate', 'r')):
+        setattr(Piston, atl, mFnAttr.create(atl, ats, OpenMaya.MFnNumericData.kFloat, 0.0))
+    
+    Piston.output = mFnAttr.create('output',    'o',    OpenMaya.MFnNumericData.kFloat)
     
     
-    Piston.addAttribute(Piston.inLengthA)
-    Piston.addAttribute(Piston.inLengthB)
-    Piston.addAttribute(Piston.inRotate)
-    Piston.addAttribute(Piston.output)
+    for attr in (Piston.distanceA, Piston.distanceB, Piston.rotate, Piston.output):
+        Piston.addAttribute(attr)
+
     
-    
-    Piston.attributeAffects(Piston.inLengthA, Piston.output)
-    Piston.attributeAffects(Piston.inLengthB, Piston.output)
-    Piston.attributeAffects(Piston.inRotate,  Piston.output)
+    for attr in (Piston.distanceA, Piston.distanceB, Piston.rotate):
+        Piston.attributeAffects(attr, Piston.output)
+
 
 
 
 def initializePlugin(MObject):
+    '''
+    Use to load Plug_in...
+    '''
     mplugin = OpenMayaMPx.MFnPlugin(MObject)
     try:
         mplugin.registerNode(PISTON_NODE_NAME, PISTON_NODE_ID, nodeCreator, nodeInitializer)
@@ -68,6 +76,9 @@ def initializePlugin(MObject):
 
 
 def uninitializePlugin(MObject):
+    '''
+    Use to unload Plug_in...
+    '''
     mplugin = OpenMayaMPx.MFnPlugin(MObject)
     try:
         mplugin.deregisterNode(PISTON_NODE_ID)
